@@ -16,4 +16,5 @@ func ConnectToDB() {
 	if err != nil {
 		log.Fatal("failed to connect database")
 	}
+	log.Printf("Connected to database")
 }
