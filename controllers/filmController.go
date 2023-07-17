@@ -4,7 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"go_crud/initializers"
 	"go_crud/models"
-	"strings"
 )
 
 func FilmCreate(c *gin.Context) {
@@ -16,12 +15,7 @@ func FilmCreate(c *gin.Context) {
 	}
 
 	c.Bind(&body)
-	var massGenres []*models.Genre
-
-	for _, name := range strings.Split(body.Genres, ",") {
-		massGenres = append(massGenres, &models.Genre{GenreName: name})
-	}
-
+	massGenres := GetGenreIdsByName(body.Genres)
 	film := models.Film{FilmName: body.FilmName, ProductionYear: body.ProductionYear,
 		Genres: massGenres}
 
@@ -37,13 +31,18 @@ func FilmCreate(c *gin.Context) {
 	})
 }
 
-//func PostAll(c *gin.Context) {
-//	posts := []models.Post{}
-//	initializers.DB.Find(&posts)
-//	c.JSON(200, gin.H{
-//		"posts": posts,
-//	})
-//}
+func FilmGetAll(c *gin.Context) {
+	film := []models.Film{}
+	err := initializers.DB.Preload("Genres").Find(&film).Error
+	if err != nil {
+		c.JSON(500, gin.H{"Ошибка": "Не удалось получить фильмы"})
+		return
+	}
+	c.JSON(200, gin.H{
+		"films": film,
+	})
+}
+
 //
 //func PostById(c *gin.Context) {
 //	// get id from url
