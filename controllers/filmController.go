@@ -15,7 +15,12 @@ func FilmCreate(c *gin.Context) {
 		Genres         string `json:"Genres"`
 	}
 
-	c.Bind(&body)
+	err := c.Bind(&body)
+	if err != nil {
+		c.JSON(500, gin.H{"Ошибка": "Не удалось получить данные при создании фильма"})
+		return
+	}
+
 	massGenres := GetGenreIdsByName(body.Genres)
 	film := models.Film{FilmName: body.FilmName, ProductionYear: body.ProductionYear,
 		Genres: massGenres}
@@ -33,7 +38,7 @@ func FilmCreate(c *gin.Context) {
 }
 
 func FilmGetAll(c *gin.Context) {
-	films := []models.Film{}
+	var films []models.Film
 	err := initializers.DB.Preload("Genres").Find(&films).Error
 	if err != nil {
 		c.JSON(500, gin.H{"Ошибка": "Не удалось получить фильмы"})
@@ -46,43 +51,57 @@ func FilmGetAll(c *gin.Context) {
 	})
 }
 
-//
-//func PostById(c *gin.Context) {
-//	// get id from url
-//	id := c.Param("id")
-//	post := models.Post{}
-//	initializers.DB.First(&post, id)
-//	c.JSON(200, gin.H{
-//		"post": post,
-//	})
-//}
-//
-//func PostUpDate(c *gin.Context) {
-//	// get id from url
-//	id := c.Param("id")
-//	var body struct {
-//		Body  string `json:"body"`
-//		Title string `json:"title"`
-//	}
-//
-//	c.Bind(&body)
-//	var post models.Post
-//	initializers.DB.First(&post, id)
-//	initializers.DB.Model(&post).Updates(models.Post{
-//		Title: body.Title,
-//		Body:  body.Body,
-//	})
-//
-//	c.JSON(200, gin.H{
-//		"post": post,
-//	})
-//}
-//
-//func PostDelete(c *gin.Context) {
-//	// get id from url
-//	id := c.Param("id")
-//	initializers.DB.Delete(&models.Post{}, id)
-//	c.JSON(200, gin.H{
-//		"post": "okey",
-//	})
-//}
+func GetFilmById(c *gin.Context) {
+	// get id from url
+	id := c.Param("id")
+	film := models.Film{}
+	initializers.DB.First(&film, id)
+	c.JSON(200, gin.H{
+		"post": film,
+	})
+}
+
+func FilmUpDate(c *gin.Context) {
+	id := c.Param("id")
+	var body struct {
+		FilmName       string `json:"Body"`
+		ProductionYear int16  `json:"ProductionYear"`
+	}
+
+	errorData := c.Bind(&body)
+	if errorData != nil {
+		c.JSON(500, gin.H{"Ошибка": "Не удалось получить данные "})
+		return
+	}
+
+	var film models.Film
+	err := initializers.DB.First(&film, id)
+	if err != nil {
+		c.JSON(500, gin.H{"Ошибка": "Не удалоось найти фильм"})
+		return
+	}
+	errUpdate := initializers.DB.Model(&film).Updates(models.Film{
+		FilmName:       body.FilmName,
+		ProductionYear: body.ProductionYear,
+	})
+	if errUpdate != nil {
+		c.JSON(500, gin.H{"Ошибка": "Не удалось обновить фильм"})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"film": film,
+	})
+}
+
+func FilmDelete(c *gin.Context) {
+	id := c.Param("id")
+	err := initializers.DB.Delete(&models.Film{}, id)
+	if err != nil {
+		c.JSON(500, gin.H{"Ошибка": "Не удалось удалить фильм"})
+		return
+	}
+	c.JSON(200, gin.H{
+		"film": "удален успешно",
+	})
+}
