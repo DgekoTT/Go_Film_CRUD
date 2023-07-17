@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go_crud/initializers"
 	"go_crud/models"
+	"go_crud/utilits"
 )
 
 func FilmCreate(c *gin.Context) {
@@ -32,14 +33,16 @@ func FilmCreate(c *gin.Context) {
 }
 
 func FilmGetAll(c *gin.Context) {
-	film := []models.Film{}
-	err := initializers.DB.Preload("Genres").Find(&film).Error
+	films := []models.Film{}
+	err := initializers.DB.Preload("Genres").Find(&films).Error
 	if err != nil {
 		c.JSON(500, gin.H{"Ошибка": "Не удалось получить фильмы"})
 		return
 	}
+
+	filmInfo := utilits.MakeFilmInfo(films)
 	c.JSON(200, gin.H{
-		"films": film,
+		"films": filmInfo,
 	})
 }
 
