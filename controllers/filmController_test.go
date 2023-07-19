@@ -93,7 +93,7 @@ func TestFilmDelete(t *testing.T) {
 }
 
 func TestFilmUpDate(t *testing.T) {
-	initializers.DB = MakeTestDB()
+	initializers.DB = MakeTestDB(t)
 	router := setupRouter()
 	req, _ := http.NewRequest("PUT", "/film/1", nil)
 	w := httptest.NewRecorder()
