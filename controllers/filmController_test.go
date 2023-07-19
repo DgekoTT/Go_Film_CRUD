@@ -2,14 +2,15 @@ package controllers
 
 import (
 	"bytes"
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
 	"go_crud/initializers"
-	"gorm.io/gorm"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+	"gorm.io/gorm"
 )
 
 type FilmResponse struct {
@@ -39,6 +40,8 @@ func MakeTestDB(t *testing.T) *gorm.DB {
 	return db
 }
 
+var firstFilm string
+
 func TestFilmCreate(t *testing.T) {
 
 	initializers.DB = MakeTestDB(t)
@@ -51,7 +54,7 @@ func TestFilmCreate(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-
+	firstFilm = w.Body.String()
 }
 
 func TestFilmGetAll(t *testing.T) {
@@ -64,7 +67,37 @@ func TestFilmGetAll(t *testing.T) {
 	// Проверка статуса ответа
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	// Проверка результата
-	expectedResult := `{"films":null}`
+	assert.Equal(t, firstFilm, strings.TrimSpace(w.Body.String()))
+}
+
+func TestGetFilmById(t *testing.T) {
+	initializers.DB = MakeTestDB(t)
+	router := setupRouter()
+	req, _ := http.NewRequest("GET", "/film/1", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, firstFilm, strings.TrimSpace(w.Body.String()))
+
+}
+
+func TestFilmDelete(t *testing.T) {
+	initializers.DB = MakeTestDB(t)
+	router := setupRouter()
+	req, _ := http.NewRequest("DELETE", "/film/1", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	expectedResult := `{"film":"удален успешно"}`
 	assert.Equal(t, expectedResult, strings.TrimSpace(w.Body.String()))
+}
+
+func TestFilmUpDate(t *testing.T) {
+	initializers.DB = MakeTestDB()
+	router := setupRouter()
+	req, _ := http.NewRequest("PUT", "/film/1", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+
 }
