@@ -13,7 +13,12 @@ func GenreCreate(c *gin.Context) {
 		GenreName string `json:"genre_name"`
 	}
 
-	c.Bind(&body)
+	errBody := c.Bind(&body)
+	if errBody != nil {
+		c.JSON(400, gin.H{"error": errBody.Error()})
+		return
+	}
+
 	genre := models.Genre{GenreName: body.GenreName}
 	result := initializers.DB.Create(&genre)
 	if result.Error != nil {
@@ -47,5 +52,17 @@ func GenreGetAll(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"genres": genres,
+	})
+}
+
+func GenreDelete(c *gin.Context) {
+	id := c.Param("id")
+	err := initializers.DB.Delete(&models.Genre{}, id)
+	if err != nil {
+		c.JSON(500, gin.H{"Ошибка": "Не удалось удалить жанр"})
+		return
+	}
+	c.JSON(200, gin.H{
+		"genre": "удален успешно",
 	})
 }

@@ -10,7 +10,7 @@ import (
 func FilmCreate(c *gin.Context) {
 
 	var body struct {
-		FilmName       string `json:"Body"`
+		FilmName       string `json:"FilmName"`
 		ProductionYear int16  `json:"ProductionYear"`
 		Genres         string `json:"Genres"`
 	}
@@ -22,6 +22,10 @@ func FilmCreate(c *gin.Context) {
 	}
 
 	massGenres := GetGenreIdsByName(body.Genres)
+	if massGenres == nil {
+		c.JSON(500, gin.H{"Ошибка": "Не удалось получить жанры"})
+		return
+	}
 	film := models.Film{FilmName: body.FilmName, ProductionYear: body.ProductionYear,
 		Genres: massGenres}
 
