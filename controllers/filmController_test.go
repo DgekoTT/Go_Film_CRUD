@@ -33,7 +33,7 @@ func setupRouter() *gin.Engine {
 	r.POST("/genre", controllers.GenreCreate)
 	r.GET("/films", controllers.FilmGetAll)
 	r.GET("/films/id/:id", controllers.GetFilmById)
-	//r.PUT("/films/:id", controllers.FilmUpDate)
+	r.PUT("/films/id/:id", controllers.FilmUpDate)
 	r.DELETE("/films/id/:id", controllers.FilmDelete)
 
 	return r
@@ -59,7 +59,7 @@ func MigrationTestDB() {
 }
 
 func recreateTestDatabase() {
-	dbName := "test_db_genre" // Замените на имя вашей тестовой базы данных
+	dbName := "test_db_genre"
 	db, err := sql.Open("postgres", "postgres://postgres:destro@localhost:5433/postgres?sslmode=disable")
 	if err != nil {
 		log.Fatalf("Ошибка при подключении к PostgreSQL: %v", err)
@@ -131,16 +131,16 @@ func TestGetFilmById(t *testing.T) {
 
 }
 
-//func TestFilmUpDate(t *testing.T) {
-//	initializers.DB = MakeTestDB(t)
-//	router := setupRouter()
-//	jsonData := `{"FilmName": "Новое имя фильма", "ProductionYear": 2023}`
-//	req, _ := http.NewRequest("PUT", "/films/1", strings.NewReader(jsonData))
-//	w := httptest.NewRecorder()
-//	router.ServeHTTP(w, req)
-//	assert.Equal(t, http.StatusOK, w.Code)
-//
-//}
+func TestFilmUpDate(t *testing.T) {
+	initializers.DB = MakeTestDB(t)
+	router := setupRouter()
+	jsonData := `{"FilmName": "Новое имя фильма", "ProductionYear": 2023}`
+	req, _ := http.NewRequest("PUT", "/films/id/1", strings.NewReader(jsonData))
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+
+}
 
 func TestFilmDelete(t *testing.T) {
 	initializers.DB = MakeTestDB(t)

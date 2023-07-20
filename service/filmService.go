@@ -2,9 +2,10 @@ package service
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"go_crud/initializers"
 	"go_crud/models"
+
+	"github.com/gin-gonic/gin"
 )
 
 func FilmCreate(c *gin.Context) (models.Film, error) {
@@ -70,4 +71,38 @@ func FilmDelete(film models.Film) error {
 	}
 
 	return nil
+}
+
+func FilmUpDate(c *gin.Context) {
+	id := c.Param("id")
+	var body struct {
+		FilmName       string `json:"Body"`
+		ProductionYear int16  `json:"ProductionYear"`
+	}
+
+	errorData := c.Bind(&body)
+	if errorData != nil {
+		c.JSON(500, gin.H{"Ошибка": "Не удалось получить данные "})
+		return
+	}
+
+	film, err := GetFilmById(id)
+	if err != nil {
+		c.JSON(500, gin.H{"Ошибка": "Фильм не найден"})
+		return
+	}
+
+	// Обновляем только необходимые поля фильма
+	film.FilmName = body.FilmName
+	film.ProductionYear = body.ProductionYear
+
+	errUpdate := initializers.DB.Save(&film)
+	if errUpdate.Error != nil {
+		c.JSON(500, gin.H{"Ошибка": "Не удалось обновить фильм"})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"film": film,
+	})
 }
