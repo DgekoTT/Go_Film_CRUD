@@ -2,8 +2,6 @@ package controllers
 
 import (
 	"github.com/gin-gonic/gin"
-	"go_crud/initializers"
-	"go_crud/models"
 	"go_crud/service"
 	"go_crud/utilits"
 )
@@ -22,13 +20,11 @@ func FilmCreate(c *gin.Context) {
 }
 
 func FilmGetAll(c *gin.Context) {
-	var films []models.Film
-	err := initializers.DB.Preload("Genres").Find(&films).Error
+	films, err := service.FilmGetAll()
 	if err != nil {
-		c.JSON(500, gin.H{"Ошибка": "Не удалось получить фильмы"})
+		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-
 	filmInfo := utilits.MakeFilmInfo(films)
 	c.JSON(200, gin.H{
 		"films": filmInfo,
@@ -36,10 +32,12 @@ func FilmGetAll(c *gin.Context) {
 }
 
 func GetFilmById(c *gin.Context) {
-	// get id from url
 	id := c.Param("id")
-	film := models.Film{}
-	initializers.DB.Preload("Genres").First(&film, id)
+	film, err := service.GetFilmById(id)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
 	c.JSON(200, gin.H{
 		"film": film,
 	})
@@ -78,17 +76,9 @@ func GetFilmById(c *gin.Context) {
 
 func FilmDelete(c *gin.Context) {
 	id := c.Param("id")
-	film := models.Film{}
-	if err := initializers.DB.First(&film, id).Error; err != nil {
-		c.JSON(404, gin.H{"Ошибка": "Фильм не найден"})
-		return
-	}
-	if err := initializers.DB.Table("film_genre").Where("film_id = ?", film.ID).Delete(nil).Error; err != nil {
-		c.JSON(500, gin.H{"Ошибка": "Не удалось удалить связи с жанрами"})
-		return
-	}
-	if err := initializers.DB.Delete(&film).Error; err != nil {
-		c.JSON(500, gin.H{"Ошибка": "Не удалось удалить фильм"})
+	film, err := service.GetFilmById(id)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 
