@@ -49,7 +49,7 @@ func FilmUpDate(c *gin.Context) {
 }
 
 func FilmDelete(c *gin.Context) {
-	//test
+	//test ci
 	id := c.Param("id")
 	film, err := service.GetFilmById(id)
 	if err != nil {
