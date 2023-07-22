@@ -50,7 +50,7 @@ func GenreGetAll(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{
+	c.JSON(500, gin.H{
 		"genres": genres,
 	})
 }
