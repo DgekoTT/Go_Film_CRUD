@@ -17,3 +17,9 @@ jobs:
         run: go build -v ./...
       - name: Test with the Go CLI
         run: go test ./controllers
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5433
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: destro
+          POSTGRES_DB: test_db_genre
