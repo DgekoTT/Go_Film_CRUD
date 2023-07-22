@@ -11,13 +11,12 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: '1.20.x'
-      - name: Install direnv
-        run: |
-          GOBIN=$PWD/bin go install github.com/direnv/direnv@latest
-          echo 'eval "$(direnv hook bash)"' >> $HOME/.bashrc
-          export PATH="$HOME/bin:$PATH"
+      - name: Install dotenv
+        run: go get github.com/joho/godotenv
       - name: Load environment variables
-        run: direnv allow
+        run: go run -mod=mod go get github.com/joho/godotenv/cmd/godotenv
+      - name: Load dotenv file
+        run: go run -mod=mod github.com/joho/godotenv/cmd/godotenv
       - name: Install dependencies
         run: go get .
       - name: Build
