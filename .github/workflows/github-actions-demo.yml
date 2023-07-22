@@ -11,15 +11,16 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: '1.20.x'
+      - name: Install direnv
+        run: |
+          GOBIN=$PWD/bin go install github.com/direnv/direnv@latest
+          echo 'eval "$(direnv hook bash)"' >> $HOME/.bashrc
+          export PATH="$HOME/bin:$PATH"
+      - name: Load environment variables
+        run: direnv allow
       - name: Install dependencies
         run: go get .
       - name: Build
         run: go build -v ./...
       - name: Test with the Go CLI
         run: go test ./controllers
-        env:
-          POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5433
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: destro
-          POSTGRES_DB: test_db_genre
