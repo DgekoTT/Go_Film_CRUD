@@ -11,9 +11,12 @@ func init() {
 }
 
 func main() {
-	err := initializers.DB.AutoMigrate(&models.Film{}, &models.Genre{})
+	err := initializers.DB.AutoMigrate(
+		&models.Film{},
+		&models.Genre{},
+		&models.User{},
+	)
 	if err != nil {
 		panic(err)
 	}
-
 }
