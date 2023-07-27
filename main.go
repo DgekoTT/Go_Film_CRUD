@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go_crud/initializers"
 	"go_crud/router"
+	"log"
 )
 
 func init() {
@@ -15,5 +16,10 @@ func main() {
 	r := gin.Default()
 	router.SetupRouter(r)
 	router.SetupRouterGenre(r)
-	r.Run() // listen and serve on 0.0.0.0:8080
+
+	err := r.Run()
+	if err != nil {
+		log.Fatalf("Ошибка при запуске сервера: %v", err)
+	}
+
 }

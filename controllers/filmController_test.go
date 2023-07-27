@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
-	"go_crud/controllers"
 	"go_crud/initializers"
 	"go_crud/models"
+	"go_crud/router"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -19,25 +19,30 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	FilmRouter  *gin.Engine
+	GenreRouter *gin.Engine
+	r           *gin.Engine
+	firstFilm   string
+	t           *testing.T
+)
+
+func init() {
+	recreateTestDatabase()
+	r = gin.Default()
+	initializers.DB = MakeTestDB(t)
+	MigrationTestDB()
+	FilmRouter = router.SetupRouter(r)
+	GenreRouter = router.SetupRouterGenre(r)
+	// Тут также можно добавить другие инициализации, если они необходимы
+}
+
 type FilmResponse struct {
 	FilmName       string   `json:"FilmName"`
 	ProductionYear int16    `json:"ProductionYear"`
 	Genres         []string `json:"Genres"`
 }
 
-func setupRouter() *gin.Engine {
-	r := gin.Default()
-
-	// Установка маршрутов
-	r.POST("/films", controllers.FilmCreate)
-	r.POST("/genre", controllers.GenreCreate)
-	r.GET("/films", controllers.FilmGetAll)
-	r.GET("/films/id/:id", controllers.GetFilmById)
-	r.PUT("/films/id/:id", controllers.FilmUpDate)
-	r.DELETE("/films/id/:id", controllers.FilmDelete)
-
-	return r
-}
 func MakeTestDB(t *testing.T) *gorm.DB {
 	db, err := initializers.InitTestDB("host=localhost user=postgres password=destro dbname=test_db_genre port=5433 sslmode=disable")
 	if err != nil {
@@ -46,7 +51,7 @@ func MakeTestDB(t *testing.T) *gorm.DB {
 	}
 	err2 := initializers.TestDB.AutoMigrate(&models.Film{}, &models.Genre{})
 	if err2 != nil {
-		panic(err2)
+		log.Println("Failed to migrate")
 	}
 	return db
 }
@@ -79,13 +84,7 @@ func recreateTestDatabase() {
 	fmt.Println("Тестовая база данных создана успешно.")
 }
 
-var firstFilm string
-
 func TestFilmCreate(t *testing.T) {
-	recreateTestDatabase()
-	initializers.DB = MakeTestDB(t)
-	MigrationTestDB()
-	router := setupRouter()
 
 	genres := []string{"комедия", "драма"}
 	for _, genre := range genres {
@@ -93,27 +92,24 @@ func TestFilmCreate(t *testing.T) {
 		genreReq, _ := http.NewRequest("POST", "/genre", bytes.NewBufferString(genreBody))
 		genreReq.Header.Set("Content-Type", "application/json")
 		genreRes := httptest.NewRecorder()
-		router.ServeHTTP(genreRes, genreReq)
+		GenreRouter.ServeHTTP(genreRes, genreReq)
 
 		assert.Equal(t, http.StatusOK, genreRes.Code)
 	}
 	body := `{"FilmName": "Тестовый фильм", "ProductionYear": 2022, "Genres": "комедия,драма"}`
-	req, _ := http.NewRequest("POST", "/films", bytes.NewBufferString(body))
+	req, _ := http.NewRequest("POST", "/film", bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	FilmRouter.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	firstFilm = w.Body.String()
 }
 
 func TestFilmGetAll(t *testing.T) {
-	initializers.DB = MakeTestDB(t)
-	router := setupRouter()
 	req, _ := http.NewRequest("GET", "/films", nil)
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-
+	FilmRouter.ServeHTTP(w, req)
 	// Проверка статуса ответа
 	assert.Equal(t, http.StatusOK, w.Code)
 
@@ -121,33 +117,27 @@ func TestFilmGetAll(t *testing.T) {
 }
 
 func TestGetFilmById(t *testing.T) {
-	initializers.DB = MakeTestDB(t)
-	router := setupRouter()
-	req, _ := http.NewRequest("GET", "/films/id/1", nil)
+	req, _ := http.NewRequest("GET", "/film/id/1", nil)
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	FilmRouter.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, firstFilm, strings.TrimSpace(w.Body.String()))
 
 }
 
 func TestFilmUpDate(t *testing.T) {
-	initializers.DB = MakeTestDB(t)
-	router := setupRouter()
 	jsonData := `{"FilmName": "Новое имя фильма", "ProductionYear": 2023}`
-	req, _ := http.NewRequest("PUT", "/films/id/1", strings.NewReader(jsonData))
+	req, _ := http.NewRequest("PUT", "/film/id/1", strings.NewReader(jsonData))
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	FilmRouter.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
 
 }
 
 func TestFilmDelete(t *testing.T) {
-	initializers.DB = MakeTestDB(t)
-	router := setupRouter()
-	req, _ := http.NewRequest("DELETE", "/films/id/1", nil)
+	req, _ := http.NewRequest("DELETE", "/film/id/1", nil)
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	FilmRouter.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
 	expectedResult := `{"film":"удален успешно"}`
 	assert.Equal(t, expectedResult, strings.TrimSpace(w.Body.String()))

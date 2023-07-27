@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"go_crud/controllers"
-	"go_crud/router"
 	"net/http"
 	"net/http/httptest"
 
@@ -31,12 +30,9 @@ func createGenre(t *testing.T, router *gin.Engine, genreName string) *httptest.R
 
 // Проверка создания жанра с уникальным именем
 func TestCreateGenre(t *testing.T) {
-	r := gin.Default()
-	routerG := router.SetupRouterGenre(r)
-
 	genres := []string{"комедия", "драма"}
 	for _, genre := range genres {
-		genreRes := createGenre(t, routerG, genre)
+		genreRes := createGenre(t, GenreRouter, genre)
 		assert.Equal(t, http.StatusOK, genreRes.Code)
 	}
 
@@ -58,13 +54,10 @@ func TestGetGenreIdsByName(t *testing.T) {
 }
 
 func TestGenreGetAll(t *testing.T) {
-	r := gin.Default()
-	routerG := router.SetupRouterGenre(r)
-
 	genreReq, err := http.NewRequest("GET", "/genre", nil)
 	assert.NoError(t, err)
 	genreReq.Header.Set("Content-Type", "application/json")
 	genreRes := httptest.NewRecorder()
-	routerG.ServeHTTP(genreRes, genreReq)
+	GenreRouter.ServeHTTP(genreRes, genreReq)
 	assert.Equal(t, http.StatusOK, genreRes.Code)
 }
