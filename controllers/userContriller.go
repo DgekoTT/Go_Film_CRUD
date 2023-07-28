@@ -1,12 +1,14 @@
 package controllers
 
 import (
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"go_crud/initializers"
 	"go_crud/models"
-	"net/http"
-
-	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
+	"net/http"
+	"os"
+	"time"
 )
 
 func Signup(c *gin.Context) {
@@ -84,7 +86,34 @@ func Login(c *gin.Context) {
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
 
 	if err != nil {
-
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid password",
+		})
 	}
 
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"userId": user.ID,
+		"Name":   user.Name,
+		"exp":    time.Now().Add(time.Hour * 24 * 30).Unix(),
+	})
+
+	tokenString, err := token.SignedString([]byte(os.Getenv("SECRET")))
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "jwt failed to signed",
+		})
+	}
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("Auth", tokenString, 3600*24*30, "", "", false, true)
+}
+
+func Logout(c *gin.Context) {
+	// Удаляем куку с именем "Auth"
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("Auth", "", -1, "", "", false, true)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Выход выполнен успешно",
+	})
 }
